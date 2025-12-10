@@ -204,13 +204,13 @@ class DNNHyperparameterTuner:
                 'test_metrics': config.get('metrics', {})
             }
             
-            print("✅ Loaded existing baseline model")
+            print("_______________Loaded existing baseline model_______________")
             return True
         except FileNotFoundError:
-            print("ℹ️  No baseline model found, will train from scratch")
+            print("_______________No baseline model found, will train from scratch_______________")
             return False
         except Exception as e:
-            print(f"⚠️  Error loading baseline model: {e}")
+            print(f"!!!!!!!!!!!Error loading baseline model!!!!!!!!!!!: {e}")
             print("   Will train from scratch")
             return False
 
@@ -221,16 +221,16 @@ class DNNHyperparameterTuner:
                 config = pickle.load(f)
             self.best_params = config.get('architecture', None)
             if self.best_params:
-                print(f"✅ Loaded existing best params")
+                print(f"_______________Loaded existing best params_______________")
                 return True
             else:
-                print("ℹ️  No best params found, will run grid search")
+                print("__________ No best params found, will run grid search______________")
                 return False
         except FileNotFoundError:
-            print("ℹ️  No best params found, will run grid search")
+            print("___________No best params found, will run grid search______________")
             return False
         except Exception as e:
-            print(f"⚠️  Error loading best params: {e}")
+            print(f"!!!!!!!!Error loading best params!!!!!!!: {e}")
             print("   Will run grid search")
             return False
     
@@ -586,9 +586,9 @@ class DNNHyperparameterTuner:
                     'batch_size': batch
                 }
                 self._save_best_params()
-                print(f"        🌟 NEW BEST MODEL! CV RMSE: {best_score:.4f} - Saved!")
+                print(f" ---------------NEW BEST MODEL! CV RMSE---------------: {best_score:.4f} - Saved!")
         
-        print("\n   ✅ Hyperparameter search complete!")
+        print("\n   ✓✓ Hyperparameter search complete!")
         return self
 
     def _save_best_params(self):
@@ -682,7 +682,7 @@ class DNNHyperparameterTuner:
                     print(f"\n   Early stopping at epoch {epoch}")
                     break
         
-        print("\n   ✅ Final model trained!")
+        print("\n   ✓✓✓✓ Final model trained!")
 
         self._save_final_best_model()
 
@@ -955,7 +955,7 @@ class DNNHyperparameterTuner:
         with open('dnn_baseline_config.pkl', 'wb') as f:
             pickle.dump(baseline_config, f)
         
-        print("   ✅ Baseline model saved immediately!")
+        print("   ✓✓✓ Baseline model saved immediately!")
 
     def _save_final_best_model(self):
         """Save the fully trained best model"""
@@ -977,7 +977,7 @@ class DNNHyperparameterTuner:
         with open('dnn_best_config.pkl', 'wb') as f:
             pickle.dump(best_config, f)
         
-        print("   ✅ Final best model saved!")
+        print("   ✓✓✓✓ Final best model saved!")
     
     def save_results(self):
         """Save final results and analysis artifacts (non-redundant)"""
@@ -990,7 +990,7 @@ class DNNHyperparameterTuner:
             results_df.to_csv('dnn_cv_results.csv', index=False)
             print("   ✅ Saved: dnn_cv_results.csv")
         else:
-            print("   ⚠️  No CV results to save")
+            print("  No CV results to save!!!!!!!!!!")
         
         # 2. Save predictions comparison (not saved incrementally)
         predictions_dict = {
@@ -1025,9 +1025,9 @@ class DNNHyperparameterTuner:
             import json
             with open('dnn_final_metrics.json', 'w') as f:
                 json.dump(metrics_summary, f, indent=4)
-            print("   ✅ Saved: dnn_final_metrics.json")
+            print("   ✓✓✓✓ Saved: dnn_final_metrics.json")
         else:
-            print("   ⚠️  Baseline metrics not available, saving best model metrics only")
+            print("   !!!!!!!! Baseline metrics not available, saving best model metrics only")
             metrics_summary = {
                 'best_model': {
                     'params': self.best_params,
@@ -1041,7 +1041,7 @@ class DNNHyperparameterTuner:
             import json
             with open('dnn_final_metrics.json', 'w') as f:
                 json.dump(metrics_summary, f, indent=4)
-            print("   ✅ Saved: dnn_final_metrics.json (best model only)")
+            print("   ✓✓✓✓ Saved: dnn_final_metrics.json (best model only)")
         
         # Note: Model weights and configs already saved incrementally
         print("\n   !!!!!Note: Model weights and configs saved during training")
@@ -1068,7 +1068,7 @@ def main():
     
     # Step 2: Train baseline only if not already saved
     if tuner.load_baseline_if_exists():
-        print("   ⏩ Skipping baseline training (already exists)")
+        print("   ++++ Skipping baseline training (already exists)++++")
     
         # Add baseline data directly
         epochs = 40
@@ -1088,7 +1088,7 @@ def main():
             'val_losses': val_losses,
             'predictions': {}
         }
-        print("   ✅ Added baseline data manually")
+        print("   ✓✓✓✓ Added baseline data manually")
     else:
         tuner.train_baseline_model(epochs=50)
     
@@ -1096,15 +1096,15 @@ def main():
     if not tuner.load_best_params_if_exists():
         tuner.hyperparameter_grid_search(n_splits=5)  # This auto-saves best params
     else:
-        print("   ⏩ Skipping grid search (best params already found)")
+        print("  ++++ Skipping grid search (best params already found) ++++")
         
         # Try to load CV results if they were saved
         try:
             cv_results_df = pd.read_csv('D:\Course_stuff_M\Machine_Learning\Project\dnn_cv_results.csv')
             tuner.cv_results = cv_results_df.to_dict('records')
-            print(f"   ✅ Loaded {len(tuner.cv_results)} CV results from file")
+            print(f"   ✓✓✓✓ Loaded {len(tuner.cv_results)} CV results from file")
         except FileNotFoundError:
-            print("   ⚠️  CV results file not found - some visualizations will be empty")
+            print("   !!!!!!!!!!CV results file not found - some visualizations will be empty!!!!!!!!")
     
     # Step 4: Train final model with best params
     train_losses = tuner.train_best_model(epochs=100)  # This auto-saves at the end
@@ -1119,7 +1119,7 @@ def main():
     tuner.save_results()
 
     print("\n" + "="*80)
-    print("✅ PyTorch DNN COMPLETE PIPELINE FINISHED!")
+    print("✓✓✓✓ PyTorch DNN COMPLETE PIPELINE FINISHED!")
     print("="*80)
     print("\nSummary:")
     print(f"  • Baseline model: {'Loaded' if tuner.load_baseline_if_exists() else 'Trained'}")
