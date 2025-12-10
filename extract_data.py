@@ -297,10 +297,6 @@ print(f"    - {len(dashboard_df):,} rows")
 print(f"    - {dashboard_df['station_id'].nunique()} stations")
 print(f"    - Models: {list(predictions.keys())}")
 
-metrics_df = pd.DataFrame(metrics_list)
-metrics_df.to_csv('model_metrics_for_dashboard.csv', index=False)
-print(f"  ✓ model_metrics_for_dashboard.csv ({len(metrics_df)} models)")
-
 station_meta = dashboard_df[['station_id', 'start_station_latitude', 'start_station_longitude']].drop_duplicates()
 if 'start_station_name' in dashboard_df.columns:
     station_meta = dashboard_df[['station_id', 'start_station_name', 'start_station_latitude', 'start_station_longitude']].drop_duplicates()
