@@ -1,5 +1,28 @@
 # BlueBikes_Demand_Prediction
 
+## Project Overview
+
+### Objective
+Predict hourly bike rental demand at each BlueBikes station to optimize bike redistribution and ensure availability.
+
+### Approach
+1. **Data Collection**: BlueBikes 2020 trip data + Boston weather data
+2. **Feature Enineering**: 41+ engineered feaures (temporal, spatial, historical, weather, demographic)
+3. **Model Development**: Three regression approaches with hyperparmeter tuning
+4. **Evaluation**: Time-series cross-validation with proper temporal splitting
+5. **Deployment**: Interactive dashboard for real-time scenario analysis
+
+
+## Results Summary
+
+| Model | Test RMSE | Test MAE | Test R² |
+|-------|-----------|----------|---------|
+| Linear Regression (Polynomial) | 2.012 | 1.245 | 0.367 |
+| Random Forest | 1.186 | 0.680 | 0.759 |
+| **Neural Network** | **1.550** | **0.896** | **0.526** |
+
+*Neural Network architecture: [128, 64, 32, 16] with 0.2 dropout*
+
 ## Environment setup
 **conda env**
 1. conda create --name "<env_name>" python=3.10python -m venv venv(for virtual environment) 
@@ -193,4 +216,220 @@ param_sets = [
 **Output files:**
 - `baseline_random_forest.pkl`
 - `optimized_random_forest.pkl`
+---
+
+
+### Step 5: Train Neural Network Model
+
+```
+bash
+
+python dnn.py
+
+```
+**Important:** Update the `data_path` in the `main()` function before running:
+```
+python tuner = DNNHyperparameterTuner(data_path='Data/bluebikes_ml_ready.csv')
+
+```
+
+**For GPU acceleration (recommended):**
+
+1. Upload `dnn.py` and `bluebikes_ml_ready.csv` to Google Colab
+2. Enable GPU runtime (Runtime → Change runtime type → GPU)
+3. Update the data path and run
+**What it does:**
+1. Loads and preprocesses data with categorical encoding
+2. Creates temporal train/val/test split (70/15/15)
+3. Trains baseline DNN ([128, 64, 32] layers, dropout=0.3)
+4. Performs 5-fold time series cross-validation
+5. Grid search over 16 hyperparameter combinations
+6. Trains final model with best hyperparameters
+7. Generates comprehensive visualizations
+**Hyperparameter Grid:**
+
+```
+param_grid = {
+    'layers_config': [[256, 128, 64], [128, 64, 32, 16]],
+    'dropout_rate': [0.2, 0.3],
+    'learning_rate': [0.001, 0.01],
+    'batch_size': [256, 512]
+}
+```
+
+**Training Features:**
+
+- Early stopping (patience=10)
+- Learning rate scheduling (ReduceLROnPlateau)
+- Batch normalization
+- He initialization for hidden layers
+- Xavier initialization for output layer
+- Incremental model saving
+
+**Output files:**
+- `dnn_baseline_config.pkl` / `dnn_baseline_weights.pkl`
+- `dnn_best_config.pkl` / `dnn_best_weights.pkl`
+- `dnn_cv_results.csv`
+- `dnn_final_metrics.json`
+- `pytorch_dnn_complete_results.png`
+---
+
+
+### Step 6: Generate Dashboard Predictions
+
+**Before running, update file paths in `extract_data.py`:**
+
+```
+CONFIG = {
+    'data_file': 'Data/bluebikes_ml_ready.csv',
+    'linear_regression': 'results/configs_weights/optimized_lr_poly_model.pkl',
+    'random_forest': 'results/configs_weights/optimized_random_forest.pkl',
+    'neural_network_config': 'results/configs_weights/dnn_best_config.pkl',
+    'neural_network_weights': 'results/configs_weights/dnn_best_weights.pkl',
+    'test_size': 0.15
+}
+```
+
+Then run:
+```
+bash
+
+python extract_data.py
+
+```
+
+**What it does:**
+
+- Loads all trained models
+- Generates predictions on test set
+- Calculates metrics for each model
+- Creates dashboard-ready CSV files
+
+**Output files:**
+- `predictions_for_dashboard.csv`
+- `model_metrics_for_dashboard.csv`
+- `station_metadata_for_dashboard.csv`
+---
+
+
+1. Open `dashboard.html` in a web browser(or open with live server in vscode)
+2. Upload the generated CSV files:
+- **Predictions**: `predictions_for_dashboard.csv`
+- **Model Metrics**: `model_metrics_for_dashboard.csv`
+- **Station Metadata**: `station_metadata_for_dashboard.csv`(optional)
+
+**Dashboard Features:**
+- 🌤️ Weather scenario  (rain, cold, sunny) and ⏰ Time period adjustments (rush hour, weekend, night) simulation
+- Dynamic model switching
+- 📈 24-hour demand forecast chart
+- 🏆 Top stations by predicted demand
+- 🔥 Hourly demand heatmap
+- 🎯 Model performance comparison
+
+
+## Model Details Summary
+
+### Linear Regression (Polynomial Features)
+**Architecture:**
+```
+
+Pipeline: StandardScaler → PolynomialFeatures → Ridge Regression
+
+```
+
+**Hyperparameter Grid:**
+| Parameter | Values Tested |
+|-----------|---------------|
+| `poly__degree` | [1, 2] |
+| `ridge__alpha` | [0.01, 0.1, 1.0, 10.0] |
+
+**Configuration:**
+- Cross-validation: 3-fold TimeSeriesSplit
+- Train/Val/Test split: 70/15/15 (temporal)
+- Memory optimization: float32 casting
+- Baseline: degree=2, alpha=1.0
+**Output Files:**
+- `baseline_lr_poly_model.pkl`
+- `optimized_lr_poly_model.pkl`
+- `model_metrics_log.json`
+- `feature_importance.csv`
+---
+
+### Random Forest Regressor
+**Baseline Configuration:**
+
+```
+python
+
+RandomForestRegressor(
+    n_estimators=100,
+    max_depth=10,
+    min_samples_split=5,
+    random_state=42,
+    n_jobs=-1
+)
+
+```
+
+**Hyperparameter Search (Manual Grid):**
+| Config | n_estimators | max_depth | min_samples_split | max_features |
+|--------|--------------|-----------|-------------------|--------------|
+| 1 | 50 | 20 | 10 | - |
+| 2 | 100 | 15 | 5 | - |
+| 3 | 50 | None | 10 | 0.5 |
+
+**Best Parameters Found:**
+```
+python
+
+{'n_estimators': 50, 'max_depth': 20, 'min_samples_split': 10}
+
+```
+
+**Output Files:**
+- `baseline_random_forest.pkl`
+- `optimized_random_forest.pkl`
+---
+
+### Deep Neural Network (PyTorch)
+
+**Architecture:**
+
+```
+
+Input(n_features) → [Hidden Layers with BatchNorm + ReLU + Dropout] → Output(1)
+
+```
+
+**Layer Structure:**
+
+- Linear layer → ReLU activation → BatchNorm → Dropout
+- Output layer: Linear with Xavier initialization
+- Hidden layers: He (Kaiming) initialization
+
+**Hyperparameter Grid:**
+| Parameter | Values Tested |
+|-----------|---------------|
+|`layers_config`| [[256, 128, 64], [128, 64, 32, 16]] |
+| `dropout_rate` | [0.2, 0.3] |
+| `learning_rate` | [0.001, 0.01] |
+| `batch_size` | [256, 512] |
+
+**Total Combinations:** 16 configurations × 5-fold CV = 80 model trainings
+**Training Configuration:**
+- Optimizer: Adam
+- Loss: MSELoss
+- Early stopping: patience=10
+- Max epochs per config: 50
+- Final training epochs: 100
+- LR Scheduler: ReduceLROnPlateau (factor=0.5, patience=5)
+
+**Output Files:**
+- `dnn_baseline_config.pkl` - Baseline model configuration
+- `dnn_baseline_weights.pkl` - Baseline model weights
+- `dnn_best_config.pkl` - Best model configuration + scaler parameters
+- `dnn_best_weights.pkl` - Best model weights
+- `dnn_cv_results.csv` - All cross-validation results
+- `dnn_final_metrics.json` - Final performance metrics
+- `pytoch_dnn_complete_results.png` - Visualization plots
 ---
