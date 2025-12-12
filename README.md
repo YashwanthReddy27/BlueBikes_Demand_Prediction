@@ -185,12 +185,12 @@ jupyter notebook ML_RandomForest.ipynb
 
 ```
 
-Run all cells in order. The notebook includes feature engineering code, so it can run standalone.
+Run all cells in order.
 
 **Option B: Using Google Colab**
 
 1. Upload `ML_RandomForest.ipynb` to Colab
-2. Upload `bluebikes_tripdata_2020.csv` and `boston_weather_2020.csv` (or `bluebikes_ml_ready.csv`)
+2. Upload `bluebikes_ml_ready.csv`
 3. Run all cells
 
 **What it does:**
